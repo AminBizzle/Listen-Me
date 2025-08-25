@@ -144,7 +144,24 @@
 
     .vol{ display:flex; align-items:center; gap:8px; margin-top:10px; }
     .time{ min-width:88px; text-align:center; opacity:.9; font-variant-numeric: tabular-nums; }
-  </style>
+ 
+/* ===== Fix banner on phones: keep it centered and allow wrapping ===== */
+@media (max-width: 480px){
+  .banner{
+    /* عرض کنترل‌شده و مرکز */
+    width: calc(var(--card-width) - 64px);
+    max-width: calc(92vw - 64px);
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+  .banner .text{
+    /* مشکل کشیده‌شدن به راست از nowrap بود */
+    white-space: normal;     /* اجازه شکست سطر */
+    display: inline-block;   /* برای مرکز‌ماندن مطمئن */
+    font-size: 13.5px;       /* کمی ظریف‌تر روی موبایل (اختیاری) */
+  }
+ </style>
 </head>
 <body>
   <div class="wrap">
@@ -234,5 +251,3 @@
   </script>
 </body>
 </html>
-
-

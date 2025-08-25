@@ -8,7 +8,7 @@
   <style>
     :root{
       /* Background image aspect ratio (height / width) */
-      --bg-ratio: 1.61977; /* 3719 / 2296 */
+      --bg-ratio: 1.66288; /* 3719 / 2296 */
 
       /* Card width shared between player and banner */
       --card-width: min(560px, 92vw);
@@ -22,15 +22,15 @@
       --text: #e5e7eb;
     }
 
-    html, body { height: auto; }
+    html, body { height: 100; }
     body {
       margin: 0; color: var(--text);
       background-image:
         linear-gradient(rgba(0,0,0,.15), rgba(0,0,0,.25)),
-        url('assets/wallpaper.jpg'); /* set your path */
+        url('assets/wallpaper.png'); /* set your path */
       background-repeat: no-repeat;
-      background-position: top center;
-      background-size: contain;
+      background-position: center;
+      background-size: cover;
       min-height: 100vh;
       height: max(100vh, calc(100vw * var(--bg-ratio)));
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
@@ -157,7 +157,7 @@
       <!-- Player card -->
       <div class="card">
         <audio id="audio" preload="metadata">
-          <source src="music.mp3" type="audio/mpeg" />
+          <source src="Its all gone okay Boom.wav" type="audio/mpeg" />
         </audio>
 
         <div class="player">

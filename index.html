@@ -425,9 +425,85 @@ function stopGlowLoop(){
   card.style.setProperty('--glowSize', '20px');
 }
 
+/* ===== DEBUG: Web Audio / Analyser =====
+   جایگذاری: انتهای اسکریپت، قبل از </script>
+   نیازمندی: متغیرهای audio, vol, card و توابع initAnalyser/startGlowLoop/stopGlowLoop از قبل تعریف شده باشند.
+*/
+(() => {
+  console.log('%c[DBG] Debug block attached', 'color:#0cf');
+
+  // رخدادهای کلیدی برای وضعیت لود/پخش
+  audio.addEventListener('loadedmetadata', () => {
+    console.log('[DBG] loadedmetadata:', {
+      src: audio.currentSrc,
+      readyState: audio.readyState,
+      duration: audio.duration
+    });
+  });
+
+  audio.addEventListener('error', () => {
+    console.error('[DBG] AUDIO ERROR:', audio.error);
+  });
+
+  audio.addEventListener('play', () => {
+    console.log('[DBG] PLAY:', {
+      acState: (typeof ac !== 'undefined' && ac) ? ac.state : '(no AC)',
+      hasAnalyser: !!(typeof analyser !== 'undefined' && analyser),
+      crossOrigin: audio.crossOrigin || '(none)',
+      sameOrigin: (() => { try { return new URL(audio.currentSrc).origin === location.origin; } catch(e){ return 'unknown'; } })()
+    });
+    startDbgEnergy();
+  });
+
+  audio.addEventListener('pause', () => {
+    console.log('[DBG] PAUSE @', audio.currentTime.toFixed(2));
+    stopDbgEnergy();
+  });
+
+  audio.addEventListener('ended', () => {
+    console.log('[DBG] ENDED');
+    stopDbgEnergy();
+  });
+
+  // نمونه‌بردار انرژی از Analyser
+  function sampleEnergy() {
+    if (!window.analyser) return null;
+    try {
+      const buf = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(buf);
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += buf[i];
+      return sum; // عدد بزرگ‌تر ⇒ انرژی بیشتر
+    } catch (e) {
+      console.warn('[DBG] sampleEnergy error:', e);
+      return null;
+    }
+  }
+
+  // تایمر گزارش انرژی
+  let dbgTimer = null;
+  function startDbgEnergy() {
+    stopDbgEnergy();
+    dbgTimer = setInterval(() => {
+      const energy = sampleEnergy();
+      console.log('[DBG] t=', audio.currentTime.toFixed(2),
+                  ' readyState=', audio.readyState,
+                  ' energy=', energy);
+      // اگر در حال پخش هستیم ولی انرژی 0 است، احتمال CORS یا اتصال ناقص
+      if (!audio.paused && (energy === 0 || energy === null)) {
+        console.warn('[DBG] Analyser zero/none while playing. Suspect CORS or graph issue. src=', audio.currentSrc);
+      }
+    }, 500);
+  }
+  function stopDbgEnergy() {
+    if (dbgTimer) { clearInterval(dbgTimer); dbgTimer = null; }
+  }
+})();
+
   </script>
 </body>
 </html>
+
 
 
 

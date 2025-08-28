@@ -108,7 +108,7 @@
   background: linear-gradient(135deg,
               rgba(13, 75, 120, 0.65),
               rgba(79,195,247, 0.45));
-  transition: box-shadow 0.08s linear, background 0.2s ease;
+  transition: box-shadow 0.04s linear, background 0.2s ease;
 }
 
 
@@ -408,9 +408,9 @@ function startGlowLoop(){
     const volScale = 0.6 + 0.4 * (+vol.value || 0);
     const pulse = Math.min(1, smooth * 1.8) * volScale;
 
-    const alpha = 0.25 + 0.55 * pulse;   // 0.25..0.80
-    const size  = 12   + 16   * pulse;   // 12..28px
-    card.style.setProperty('--glowA', alpha.toFixed(2));
+    const alpha = 0.35 + 0.90 * pulse;   // 0.25..0.80
+    const size  = 16   + 32   * pulse;   // 12..28px
+    card.style.setProperty('--glowA', Math.min(1, alpha).toFixed(2));
     card.style.setProperty('--glowSize', `${Math.round(size)}px`);
 
     rafId = requestAnimationFrame(loop);
@@ -424,77 +424,6 @@ function stopGlowLoop(){
   card.style.setProperty('--glowA', '0');
   card.style.setProperty('--glowSize', '20px');
 }
-
-/* DEBUG: Web Audio / Analyser (safe block, no closing tag literals) */
-(function(){
-  console.log('%c[DBG] Debug block attached', 'color:#0cf');
-
-  audio.addEventListener('loadedmetadata', () => {
-    console.log('[DBG] loadedmetadata:', {
-      src: audio.currentSrc,
-      readyState: audio.readyState,
-      duration: audio.duration
-    });
-  });
-
-  audio.addEventListener('error', () => {
-    console.error('[DBG] AUDIO ERROR:', audio.error);
-  });
-
-  audio.addEventListener('play', () => {
-    console.log('[DBG] PLAY:', {
-      acState: (typeof ac !== 'undefined' && ac) ? ac.state : '(no AC)',
-      hasAnalyser: !!(typeof analyser !== 'undefined' && analyser),
-      crossOrigin: audio.crossOrigin || '(none)',
-      sameOrigin: (function(){ 
-        try { return new URL(audio.currentSrc).origin === location.origin; }
-        catch(e){ return 'unknown'; }
-      })()
-    });
-    startDbgEnergy();
-  });
-
-  audio.addEventListener('pause', () => {
-    console.log('[DBG] PAUSE @', audio.currentTime.toFixed(2));
-    stopDbgEnergy();
-  });
-
-  audio.addEventListener('ended', () => {
-    console.log('[DBG] ENDED');
-    stopDbgEnergy();
-  });
-
-  function sampleEnergy() {
-    if (!analyser) return null;
-    try {
-      const buf = new Uint8Array(analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(buf);
-      let sum = 0;
-      for (let i = 0; i < buf.length; i++) sum += buf[i];
-      return sum; // بزرگ‌تر ⇒ انرژی بیشتر
-    } catch (e) {
-      console.warn('[DBG] sampleEnergy error:', e);
-      return null;
-    }
-  }
-
-  let dbgTimer = null;
-  function startDbgEnergy() {
-    stopDbgEnergy();
-    dbgTimer = setInterval(() => {
-      const energy = sampleEnergy();
-      console.log('[DBG] t=', audio.currentTime.toFixed(2),
-                  ' readyState=', audio.readyState,
-                  ' energy=', energy);
-      if (!audio.paused && (energy === 0 || energy === null)) {
-        console.warn('[DBG] Analyser zero/none while playing. Suspect CORS or graph issue. src=', audio.currentSrc);
-      }
-    }, 500);
-  }
-  function stopDbgEnergy() {
-    if (dbgTimer) { clearInterval(dbgTimer); dbgTimer = null; }
-  }
-})();
 
   </script>
 </body>

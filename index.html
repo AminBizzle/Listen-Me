@@ -170,18 +170,20 @@
 .range::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
   width: 18px; height: 18px; border-radius: 50%;
-
-  /* حالت عادی: شیشه‌ای */
-  background: linear-gradient(135deg,
-              rgba(255,255,255,0.75),
-              rgba(255,255,255,0.25));
+  
+  /* شیشه‌ای + محو کننده رنگ پشت */
+  background: radial-gradient(circle at 30% 30%, 
+              rgba(255,255,255,0.9) 0%, 
+              rgba(255,255,255,0.4) 60%, 
+              rgba(255,255,255,0.2) 100%);
   border: 1px solid rgba(255,255,255,0.4);
+  backdrop-filter: blur(2px);
   box-shadow:
     0 2px 4px rgba(0,0,0,0.25),
     inset 0 1px 2px rgba(255,255,255,0.6);
 
   margin-top: -4px;
-  transition: all 0.25s ease;   /* برای انیمیشن نرم */
+  transition: all 0.25s ease;
 }
 
 .range::-moz-range-thumb {
@@ -426,6 +428,7 @@ function stopGlowLoop(){
   </script>
 </body>
 </html>
+
 
 
 

@@ -293,30 +293,32 @@
       dur.textContent = fmt(audio.duration);
     });
 
-function smoothPause(ms = 600){
+function smoothPause(ms = 650){
   if (!ac || audio.paused) return;
   const now = ac.currentTime;
 
-  // جلوگیری از برنامه‌ریزی‌های قبلی
+  // لغو برنامه‌ریزی‌های قبلی
   masterGain.gain.cancelScheduledValues(now);
   wetGain.gain.cancelScheduledValues(now);
 
-  // Wet را برای Tail بالا بیاوریم و بعد صفرش کنیم
-  wetGain.gain.setValueAtTime(0, now);
-  wetGain.gain.linearRampToValueAtTime(0.35, now + 0.05);
+  // Tail اکو: کمی بالا، سپس صفر
+  wetGain.gain.setValueAtTime(wetGain.gain.value, now);
+  wetGain.gain.linearRampToValueAtTime(0.25, now + 0.06);
   wetGain.gain.linearRampToValueAtTime(0.0,  now + ms/1000);
 
-  // فید-آوت نرم ولوم کل
-  const start = masterGain.gain.value;
+  // فید اصلی: اکسپوننشیال تا «خیلی نزدیک صفر» (برای حذف کلیک)، بعداً صفر می‌کنیم
+  const start = Math.max(1e-4, masterGain.gain.value);
   masterGain.gain.setValueAtTime(start, now);
-  masterGain.gain.linearRampToValueAtTime(0.0, now + ms/1000);
+  masterGain.gain.exponentialRampToValueAtTime(0.0008, now + ms/1000);
 
-  // بعد از اتمام فید، واقعاً Pause کن و ولوم‌ها را ریست کن
+  // کمی بعد از انتهای فید Pause کن تا کلیک رخ نده
   setTimeout(() => {
     audio.pause();
-    masterGain.gain.setValueAtTime(1, ac.currentTime);
-    wetGain.gain.setValueAtTime(0, ac.currentTime);
-  }, ms + 30);
+    // ریست گین‌ها
+    const t = ac.currentTime;
+    masterGain.gain.setValueAtTime(1, t);
+    wetGain.gain.setValueAtTime(0, t);
+  }, ms + 80);
 }
 
     // Play/Pause
@@ -413,32 +415,42 @@ function initAnalyser(){
   mediaSrc.connect(analyser);
   analyser.connect(ac.destination);
   fftBuf = new Uint8Array(analyser.frequencyBinCount);
-// --- Nodes for smooth pause + echo tail ---
-window.masterGain = ac.createGain();  // ولوم کل
-window.delayNode  = ac.createDelay(); // تاخیر برای اکو
-window.fbGain     = ac.createGain();  // فیدبک اکو
-window.wetGain    = ac.createGain();  // شدت صدای اکو (wet)
+// --- Nodes for smooth pause + echo (با دمپ فرکانس بالا) ---
+window.masterGain = ac.createGain();
+window.delayNode  = ac.createDelay(1.0); // تا 1s
+window.fbGain     = ac.createGain();
+window.wetGain    = ac.createGain();
+
+// فیلترهای Low-pass برای دمپ
+window.lpOut = ac.createBiquadFilter(); // خروجی اکو
+window.lpFB  = ac.createBiquadFilter(); // حلقه فیدبک
 
 masterGain.gain.value = 1;
-delayNode.delayTime.value = 0.22;   // 220ms اکو
-fbGain.gain.value = 0.25;           // شدت حلقه اکو
-wetGain.gain.value = 0;             // به طور پیش‌فرض خاموش
+delayNode.delayTime.value = 0.22;
+fbGain.gain.value = 0.18;        // کمتر از قبل (کاهش نویز)
+wetGain.gain.value = 0;
 
-// گراف صدا:
-// ورودی
+// دمپ‌های ضد‌خش‌خش
+lpOut.type = 'lowpass'; lpOut.frequency.value = 6000; lpOut.Q.value = 0.7;
+lpFB.type  = 'lowpass'; lpFB.frequency.value  = 4500; lpFB.Q.value  = 0.5;
+
+// گراف اصلی
 mediaSrc.connect(masterGain);
 
-// مسیر اصلی به خروجی + آنالایزر
+// به خروجی + آنالایزر
 masterGain.connect(ac.destination);
 masterGain.connect(analyser);
 
-// مسیر اکو (feedback loop)
+// مسیر اکو (Send + خروجی مرطوب)
 masterGain.connect(delayNode);
-delayNode.connect(wetGain);
-wetGain.connect(masterGain);   // برگشت به میکس اصلی
+delayNode.connect(lpOut);
+lpOut.connect(wetGain);
+wetGain.connect(masterGain);   // برمی‌گرده به میکس اصلی
+
+// حلقه فیدبک با دمپ
 delayNode.connect(fbGain);
-fbGain.connect(delayNode);
-}
+fbGain.connect(lpFB);
+lpFB.connect(delayNode);
 
 function startGlowLoop(){
   if (rafId) cancelAnimationFrame(rafId);
@@ -479,6 +491,7 @@ function stopGlowLoop(){
   </script>
 </body>
 </html>
+
 
 
 

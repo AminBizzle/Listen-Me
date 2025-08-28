@@ -465,7 +465,7 @@ function stopGlowLoop(){
   });
 
   function sampleEnergy() {
-    if (!window.analyser) return null;
+    if (!analyser) return null;
     try {
       const buf = new Uint8Array(analyser.frequencyBinCount);
       analyser.getByteFrequencyData(buf);
@@ -499,6 +499,7 @@ function stopGlowLoop(){
   </script>
 </body>
 </html>
+
 
 
 

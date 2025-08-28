@@ -425,14 +425,10 @@ function stopGlowLoop(){
   card.style.setProperty('--glowSize', '20px');
 }
 
-/* ===== DEBUG: Web Audio / Analyser =====
-   جایگذاری: انتهای اسکریپت، قبل از </script>
-   نیازمندی: متغیرهای audio, vol, card و توابع initAnalyser/startGlowLoop/stopGlowLoop از قبل تعریف شده باشند.
-*/
-(() => {
+/* DEBUG: Web Audio / Analyser (safe block, no closing tag literals) */
+(function(){
   console.log('%c[DBG] Debug block attached', 'color:#0cf');
 
-  // رخدادهای کلیدی برای وضعیت لود/پخش
   audio.addEventListener('loadedmetadata', () => {
     console.log('[DBG] loadedmetadata:', {
       src: audio.currentSrc,
@@ -450,7 +446,10 @@ function stopGlowLoop(){
       acState: (typeof ac !== 'undefined' && ac) ? ac.state : '(no AC)',
       hasAnalyser: !!(typeof analyser !== 'undefined' && analyser),
       crossOrigin: audio.crossOrigin || '(none)',
-      sameOrigin: (() => { try { return new URL(audio.currentSrc).origin === location.origin; } catch(e){ return 'unknown'; } })()
+      sameOrigin: (function(){ 
+        try { return new URL(audio.currentSrc).origin === location.origin; }
+        catch(e){ return 'unknown'; }
+      })()
     });
     startDbgEnergy();
   });
@@ -465,7 +464,6 @@ function stopGlowLoop(){
     stopDbgEnergy();
   });
 
-  // نمونه‌بردار انرژی از Analyser
   function sampleEnergy() {
     if (!window.analyser) return null;
     try {
@@ -473,14 +471,13 @@ function stopGlowLoop(){
       analyser.getByteFrequencyData(buf);
       let sum = 0;
       for (let i = 0; i < buf.length; i++) sum += buf[i];
-      return sum; // عدد بزرگ‌تر ⇒ انرژی بیشتر
+      return sum; // بزرگ‌تر ⇒ انرژی بیشتر
     } catch (e) {
       console.warn('[DBG] sampleEnergy error:', e);
       return null;
     }
   }
 
-  // تایمر گزارش انرژی
   let dbgTimer = null;
   function startDbgEnergy() {
     stopDbgEnergy();
@@ -489,7 +486,6 @@ function stopGlowLoop(){
       console.log('[DBG] t=', audio.currentTime.toFixed(2),
                   ' readyState=', audio.readyState,
                   ' energy=', energy);
-      // اگر در حال پخش هستیم ولی انرژی 0 است، احتمال CORS یا اتصال ناقص
       if (!audio.paused && (energy === 0 || energy === null)) {
         console.warn('[DBG] Analyser zero/none while playing. Suspect CORS or graph issue. src=', audio.currentSrc);
       }
@@ -503,6 +499,7 @@ function stopGlowLoop(){
   </script>
 </body>
 </html>
+
 
 
 

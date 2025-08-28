@@ -293,54 +293,26 @@
       dur.textContent = fmt(audio.duration);
     });
 
-function smoothPause(ms = 650){
-  if (!ac || audio.paused) return;
-  const now = ac.currentTime;
-
-  // لغو برنامه‌ریزی‌های قبلی
-  masterGain.gain.cancelScheduledValues(now);
-  wetGain.gain.cancelScheduledValues(now);
-
-  // Tail اکو: کمی بالا، سپس صفر
-  wetGain.gain.setValueAtTime(wetGain.gain.value, now);
-  wetGain.gain.linearRampToValueAtTime(0.25, now + 0.06);
-  wetGain.gain.linearRampToValueAtTime(0.0,  now + ms/1000);
-
-  // فید اصلی: اکسپوننشیال تا «خیلی نزدیک صفر» (برای حذف کلیک)، بعداً صفر می‌کنیم
-  const start = Math.max(1e-4, masterGain.gain.value);
-  masterGain.gain.setValueAtTime(start, now);
-  masterGain.gain.exponentialRampToValueAtTime(0.0008, now + ms/1000);
-
-  // کمی بعد از انتهای فید Pause کن تا کلیک رخ نده
-  setTimeout(() => {
-    audio.pause();
-    // ریست گین‌ها
-    const t = ac.currentTime;
-    masterGain.gain.setValueAtTime(1, t);
-    wetGain.gain.setValueAtTime(0, t);
-  }, ms + 80);
-}
-
     // Play/Pause
     playBtn.addEventListener('click', async () => {
   try {
+    // تضمین ایجاد/Resume در جسچر کاربر
     if (!ac) initAnalyser();
     if (ac.state === 'suspended') await ac.resume();
   } catch {}
 
   if (audio.paused) {
-    try {
-      await audio.play();
+    try { 
+      await audio.play(); 
       playBtn.textContent = 'Pause';
       card.classList.add('glow');
-      startGlowLoop();
+      startGlowLoop();               // ← پالس را شروع کن
     } catch {}
   } else {
-    // به جای pause مستقیم:
-    smoothPause(600);                 // 600ms فید+اکو
+    audio.pause();
     playBtn.textContent = 'Play';
-    card.classList.remove('glow');    // اگر دوست داری Glow تا پایان فید بماند، این خط را حذف کن
-    stopGlowLoop();
+    card.classList.remove('glow');
+    stopGlowLoop();                  // ← پالس را متوقف کن
   }
 });
 
@@ -415,42 +387,6 @@ function initAnalyser(){
   mediaSrc.connect(analyser);
   analyser.connect(ac.destination);
   fftBuf = new Uint8Array(analyser.frequencyBinCount);
-// --- Nodes for smooth pause + echo (با دمپ فرکانس بالا) ---
-window.masterGain = ac.createGain();
-window.delayNode  = ac.createDelay(1.0); // تا 1s
-window.fbGain     = ac.createGain();
-window.wetGain    = ac.createGain();
-
-// فیلترهای Low-pass برای دمپ
-window.lpOut = ac.createBiquadFilter(); // خروجی اکو
-window.lpFB  = ac.createBiquadFilter(); // حلقه فیدبک
-
-masterGain.gain.value = 1;
-delayNode.delayTime.value = 0.22;
-fbGain.gain.value = 0.18;        // کمتر از قبل (کاهش نویز)
-wetGain.gain.value = 0;
-
-// دمپ‌های ضد‌خش‌خش
-lpOut.type = 'lowpass'; lpOut.frequency.value = 6000; lpOut.Q.value = 0.7;
-lpFB.type  = 'lowpass'; lpFB.frequency.value  = 4500; lpFB.Q.value  = 0.5;
-
-// گراف اصلی
-mediaSrc.connect(masterGain);
-
-// به خروجی + آنالایزر
-masterGain.connect(ac.destination);
-masterGain.connect(analyser);
-
-// مسیر اکو (Send + خروجی مرطوب)
-masterGain.connect(delayNode);
-delayNode.connect(lpOut);
-lpOut.connect(wetGain);
-wetGain.connect(masterGain);   // برمی‌گرده به میکس اصلی
-
-// حلقه فیدبک با دمپ
-delayNode.connect(fbGain);
-fbGain.connect(lpFB);
-lpFB.connect(delayNode);
 }
 
 function startGlowLoop(){
@@ -492,9 +428,6 @@ function stopGlowLoop(){
   </script>
 </body>
 </html>
-
-
-
 
 
 

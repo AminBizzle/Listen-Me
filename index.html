@@ -293,26 +293,52 @@
       dur.textContent = fmt(audio.duration);
     });
 
+function smoothPause(ms = 600){
+  if (!ac || audio.paused) return;
+  const now = ac.currentTime;
+
+  // جلوگیری از برنامه‌ریزی‌های قبلی
+  masterGain.gain.cancelScheduledValues(now);
+  wetGain.gain.cancelScheduledValues(now);
+
+  // Wet را برای Tail بالا بیاوریم و بعد صفرش کنیم
+  wetGain.gain.setValueAtTime(0, now);
+  wetGain.gain.linearRampToValueAtTime(0.35, now + 0.05);
+  wetGain.gain.linearRampToValueAtTime(0.0,  now + ms/1000);
+
+  // فید-آوت نرم ولوم کل
+  const start = masterGain.gain.value;
+  masterGain.gain.setValueAtTime(start, now);
+  masterGain.gain.linearRampToValueAtTime(0.0, now + ms/1000);
+
+  // بعد از اتمام فید، واقعاً Pause کن و ولوم‌ها را ریست کن
+  setTimeout(() => {
+    audio.pause();
+    masterGain.gain.setValueAtTime(1, ac.currentTime);
+    wetGain.gain.setValueAtTime(0, ac.currentTime);
+  }, ms + 30);
+}
+
     // Play/Pause
     playBtn.addEventListener('click', async () => {
   try {
-    // تضمین ایجاد/Resume در جسچر کاربر
     if (!ac) initAnalyser();
     if (ac.state === 'suspended') await ac.resume();
   } catch {}
 
   if (audio.paused) {
-    try { 
-      await audio.play(); 
+    try {
+      await audio.play();
       playBtn.textContent = 'Pause';
       card.classList.add('glow');
-      startGlowLoop();               // ← پالس را شروع کن
+      startGlowLoop();
     } catch {}
   } else {
-    audio.pause();
+    // به جای pause مستقیم:
+    smoothPause(600);                 // 600ms فید+اکو
     playBtn.textContent = 'Play';
-    card.classList.remove('glow');
-    stopGlowLoop();                  // ← پالس را متوقف کن
+    card.classList.remove('glow');    // اگر دوست داری Glow تا پایان فید بماند، این خط را حذف کن
+    stopGlowLoop();
   }
 });
 
@@ -387,6 +413,31 @@ function initAnalyser(){
   mediaSrc.connect(analyser);
   analyser.connect(ac.destination);
   fftBuf = new Uint8Array(analyser.frequencyBinCount);
+// --- Nodes for smooth pause + echo tail ---
+window.masterGain = ac.createGain();  // ولوم کل
+window.delayNode  = ac.createDelay(); // تاخیر برای اکو
+window.fbGain     = ac.createGain();  // فیدبک اکو
+window.wetGain    = ac.createGain();  // شدت صدای اکو (wet)
+
+masterGain.gain.value = 1;
+delayNode.delayTime.value = 0.22;   // 220ms اکو
+fbGain.gain.value = 0.25;           // شدت حلقه اکو
+wetGain.gain.value = 0;             // به طور پیش‌فرض خاموش
+
+// گراف صدا:
+// ورودی
+mediaSrc.connect(masterGain);
+
+// مسیر اصلی به خروجی + آنالایزر
+masterGain.connect(ac.destination);
+masterGain.connect(analyser);
+
+// مسیر اکو (feedback loop)
+masterGain.connect(delayNode);
+delayNode.connect(wetGain);
+wetGain.connect(masterGain);   // برگشت به میکس اصلی
+delayNode.connect(fbGain);
+fbGain.connect(delayNode);
 }
 
 function startGlowLoop(){
@@ -428,6 +479,7 @@ function stopGlowLoop(){
   </script>
 </body>
 </html>
+
 
 
 

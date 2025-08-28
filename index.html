@@ -451,6 +451,7 @@ wetGain.connect(masterGain);   // برمی‌گرده به میکس اصلی
 delayNode.connect(fbGain);
 fbGain.connect(lpFB);
 lpFB.connect(delayNode);
+}
 
 function startGlowLoop(){
   if (rafId) cancelAnimationFrame(rafId);
@@ -491,6 +492,7 @@ function stopGlowLoop(){
   </script>
 </body>
 </html>
+
 
 
 

@@ -240,6 +240,44 @@
     display: inline-block;   /* برای مرکز‌ماندن مطمئن */
     font-size: 13.5px;       /* کمی ظریف‌تر روی موبایل (اختیاری) */
   }
+
+/* --- Lyrics container --- */
+/* دو Enter فاصله، هم‌عرض کارت، وسط‌چین */
+.lyrics{
+  width: var(--card-width);
+  margin: 2em auto 0;          /* ← دقیقاً ~دو خط فاصله زیر کارت */
+  position: relative;
+  min-height: 2.2em;
+  overflow: hidden;
+  text-align: center;
+  pointer-events: none;
+}
+
+.lyrics-line{
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity .35s ease, transform .35s ease, filter .35s ease;
+  white-space: normal; line-height: 1.25;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
+}
+
+/* ورود نرم */
+.lyrics-line.active{ opacity: 1; transform: translateY(0); }
+
+/* استایل شیشه‌ای مطابق توضیح بالا */
+.banner .text,
+.lyrics-line{
+  font-family: 'Times New Roman', Times, serif;
+  background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.1));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+  text-shadow:
+    0 1px 1px rgba(255,255,255,0.4),
+    0 2px 4px rgba(0,0,0,0.25);
+}
  </style>
 </head>
 <body>
@@ -267,6 +305,12 @@
           <label for="vol">Volume</label>
           <input type="range" id="vol" class="range" min="0" max="1" step="0.01" value="1" aria-label="Volume">
         </div>
+
+<!-- Lyrics (exactly two lines below the card) -->
+<div class="lyrics" id="lyrics">
+  <div class="lyrics-line" id="lyrA">‎</div>
+  <div class="lyrics-line" id="lyrB">‎</div>
+</div>
       </div>
     </div>
   </div>
@@ -425,9 +469,109 @@ function stopGlowLoop(){
   card.style.setProperty('--glowSize', '20px');
 }
 
+// ====== LRC Sync (line-by-line with soft fade) ======
+
+const LRC_URL = 'lyrics.lrc';   // اگر مسیر دیگری گذاشتی این را اصلاح کن
+const LYRIC_OFFSET = 0.00;      // در صورت نیاز افست میلی‌ثانیه‌ای (+/-)
+
+const lyrA = document.getElementById('lyrA');
+const lyrB = document.getElementById('lyrB');
+let useA = true;                // برای سوییچ بین لایه‌ها
+let lrcLines = [];              // [{t:seconds, text:string}, ...]
+let curIdx = -1;
+
+// لود و پارس
+fetch(LRC_URL)
+  .then(r => {
+    if (!r.ok) throw new Error('LRC not found');
+    return r.text();
+  })
+  .then(txt => {
+    lrcLines = parseLRC(txt);
+    // اختیاری: اولین خط را خالی نگه دار تا قبل پخش چیزی نباشد
+  })
+  .catch(err => {
+    console.warn('[LRC]', err);
+  });
+
+// پارسر ساده LRC: [mm:ss.xx] Line...
+function parseLRC(text){
+  const lines = [];
+  const re = /\[(\d+):(\d+(?:\.\d+)?)\]\s*(.*)/; // [m:ss.xx] text
+  text.split(/\r?\n/).forEach(raw => {
+    const m = raw.match(re);
+    if (!m) return;
+    const mmin = parseInt(m[1], 10);
+    const sec  = parseFloat(m[2]);
+    const t = mmin * 60 + sec;
+    const txt = m[3].trim();
+    if (txt) lines.push({ t, text: txt });
+  });
+  // مرتب‌سازی و حذف خطوط خیلی نزدیک
+  lines.sort((a,b)=>a.t-b.t);
+  return lines;
+}
+
+// آپدیت اکتیو لاین (هر 150ms)
+let lrcTimer = null;
+function startLyricLoop(){
+  stopLyricLoop();
+  lrcTimer = setInterval(() => {
+    if (!lrcLines.length) return;
+    const now = Math.max(0, audio.currentTime + LYRIC_OFFSET);
+
+    // یافتن ایندکس خط فعلی
+    // (آخرین خطی که t <= now)
+    let i = curIdx;
+    if (i < 0 || i >= lrcLines.length || lrcLines[i].t > now) i = 0;
+    while (i + 1 < lrcLines.length && lrcLines[i+1].t <= now) i++;
+
+    if (i !== curIdx){
+      curIdx = i;
+      crossfadeTo(lrcLines[i].text);
+    }
+
+    // اگر بعد از آخرین تایم هستیم و آهنگ نزدیک پایان است، محو کن
+    if (curIdx === lrcLines.length - 1 && now > lrcLines[curIdx].t + 6){
+      fadeOutAll();
+    }
+  }, 150);
+}
+function stopLyricLoop(){
+  if (lrcTimer) { clearInterval(lrcTimer); lrcTimer = null; }
+}
+
+// کراس‌فید بین دو لایه
+function crossfadeTo(text){
+  const showEl = useA ? lyrA : lyrB;
+  const hideEl = useA ? lyrB : lyrA;
+  useA = !useA;
+
+  // آماده‌سازی لایه جدید
+  showEl.textContent = text;
+  showEl.classList.add('active');
+
+  // محو لایه قدیمی
+  hideEl.classList.remove('active');
+}
+
+// محوی کامل (برای پایان)
+function fadeOutAll(){
+  lyrA.classList.remove('active');
+  lyrB.classList.remove('active');
+}
+
+// همگام با پخش/توقف
+audio.addEventListener('play',  startLyricLoop);
+audio.addEventListener('pause', stopLyricLoop);
+audio.addEventListener('ended', () => {
+  stopLyricLoop();
+  fadeOutAll();
+});
   </script>
 </body>
 </html>
+
 
 
 

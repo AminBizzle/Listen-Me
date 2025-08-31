@@ -259,7 +259,7 @@
   display: flex; align-items: center; justify-content: center;
   opacity: 0;
   transform: none;  /* قبلاً translateY(8px) بود → حذف حرکت */
-  transition: opacity 0.8s ease, filter 0.8s ease; /* transform را از ترنزیشن حذف کن */
+  transition: opacity var(--fade) ease, filter var(--fade) ease;
   white-space: normal; line-height: 1.25;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
   will-change: opacity;
@@ -554,17 +554,31 @@ function stopLyricLoop(){
 }
 
 // کراس‌فید بین دو لایه
+// مدت‌ها
+const FADE_MS     = 700;  // باید با --fade همگام باشد (0.7s)
+const OVERLAP_OUT = 180;  // چند ms خط قبلی بعد از شروع خط جدید روشن بماند
+const DELAY_IN    = 40;   // چند ms تأخیر برای اطمینان از ترنزیشن
+
 function crossfadeTo(text){
   const showEl = useA ? lyrA : lyrB;
   const hideEl = useA ? lyrB : lyrA;
   useA = !useA;
 
-  // آماده‌سازی لایه جدید
+  // 1) متن جدید را روی لایهٔ جدید بگذار
   showEl.textContent = text;
-  showEl.classList.add('active');
 
-  // محو لایه قدیمی
-  hideEl.classList.remove('active');
+  // 2) با اندکی تأخیر فعالش کن تا ترنزیشن حتماً تریگر شود
+  // (دو rAF یا setTimeout کوتاه کافی است)
+  clearTimeout(showEl._inT);
+  showEl._inT = setTimeout(() => {
+    showEl.classList.add('active');
+  }, DELAY_IN);
+
+  // 3) لایهٔ قبلی را با اورلپ خاموش کن (کراس‌فید واقعی)
+  clearTimeout(hideEl._outT);
+  hideEl._outT = setTimeout(() => {
+    hideEl.classList.remove('active');
+  }, OVERLAP_OUT);
 }
 
 // محوی کامل (برای پایان)
@@ -583,6 +597,7 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 
 
 

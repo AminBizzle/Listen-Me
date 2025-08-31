@@ -102,12 +102,13 @@
 
 .card.glow {
   box-shadow:
-    0 0 var(--glowSize) rgba(79,195,247, var(--glowA)),  /* هاله آبی */
-    0 4px 20px rgba(0,0,0,0.4);
+    0 0 var(--glowSize) rgba(57,126,172,0.35),   /* #397EAC */
+    0 0 calc(var(--glowSize) * 1.2) rgba(88,155,199,0.25), /* #589BC7 */
+    0 4px 20px rgba(0,0,0,0.35);  /* سایه بیرونی برای عمق */
   background: linear-gradient(135deg,
-              rgba(13, 75, 120, 0.65),
-              rgba(79,195,247, 0.45));
-  transition: box-shadow 0.08s linear, background 0.2s ease;
+              rgba(13, 75, 120, 0.5),
+              rgba(79,195,247, 0.25));
+  transition: box-shadow 0.1s ease, background 0.25s ease;
 }
 
     /* Hide native controls; custom UI */
@@ -580,6 +581,7 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 
 
 

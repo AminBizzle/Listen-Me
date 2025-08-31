@@ -7,69 +7,93 @@
   <meta name="description" content="Minimal audio player by Amin" />
   <style>
     :root{
-      /* Background image aspect ratio (height / width) */
-      --bg-ratio: 1.66288; /* 3719 / 2296 */
+  /* Background image aspect ratio (height / width) */
+  --bg-ratio: 1.66288; /* 3719 / 2296 */
 
-      /* Card width shared between player and banner */
-      --card-width: min(520px, 88vw);
-      --banner-gap: 4em; /* ~ four Shift+Enter lines */
-      --lift: -10vh;                     /* مقدار منفی یعنی بالاتر از وسط */
-    }
+  /* Card width shared between player and banner */
+  --card-width: min(520px, 88vw);
+  --banner-gap: 4em; 
+  --lift: -10vh;
 
-    /* قبلی: .stack { display:flex; flex-direction:column; align-items:center; } */
-    .stack{
-      display:flex; flex-direction:column; align-items:center;
-      transform: translateY(var(--lift));   /* ← اضافه */
-    }
+  /* Brand colors */
+  --sky-light: #4FC3F7;
+  --sky-dark:  #0D4B78;
+  --glass: rgba(17,24,39,.45);
+  --text: #e5e7eb;
+}
 
-      /* Brand colors */
-      --sky-light: #4FC3F7;
-      --sky-dark:  #0D4B78;
+.stack{
+  display:flex; flex-direction:column; align-items:center;
+  transform: translateY(var(--lift));
+}
 
-      --glass: rgba(17,24,39,.45);
-      --text: #e5e7eb;
-    }
+html, body { height: 100%; }        /* ← % را تصحیح کن */
+body{
+  margin:0; color:var(--text);
+  background-image:
+    linear-gradient(rgba(0,0,0,.15), rgba(0,0,0,.25)),
+    url('wallpaper.png');
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:cover;
+  min-height:100vh;
+  height:max(100vh, calc(100vw * var(--bg-ratio)));
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
 
-    html, body { height: 100; }
-    body {
-      margin: 0; color: var(--text);
-      background-image:
-        linear-gradient(rgba(0,0,0,.15), rgba(0,0,0,.25)),
-        url('wallpaper.png'); /* set your path */
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: cover;
-      min-height: 100vh;
-      height: max(100vh, calc(100vw * var(--bg-ratio)));
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    }
+/* ... همهٔ استایل‌های فعلی کارت/دکمه/رنج‌اسلایدرِ تو بدون تغییر ... */
 
-    /* Center vertical stack: banner above, player below */
-    .wrap { position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; }
-    .stack { display: flex; flex-direction: column; align-items: center; }
+/* --- Banner tweaks for phones --- */
+@media (max-width: 480px){
+  .banner{
+    width: calc(var(--card-width) - 64px);
+    max-width: calc(92vw - 64px);
+    margin-left:auto; margin-right:auto;
+    text-align:center;
+  }
+  .banner .text{
+    white-space: normal;
+    display: inline-block;
+    font-size: 13.5px;
+  }
+}  /* <<< این کروشهٔ بسته‌شدن @media را اضافه کن */
 
-    /* Top banner: transparent container; 1 inch narrower than player */
-    .banner {
-      width: calc(var(--card-width) - 96px); /* 1in = 96px */
-      max-width: calc(92vw - 96px);
-      margin-bottom: var(--banner-gap);
-      text-align: center;
-      pointer-events: none; /* don't block clicks to player */
-    }
+/* --- Lyrics (خارج از @media تا همیشه اعمال شود) --- */
+.lyrics{
+  width: var(--card-width);
+  margin: 2em auto 0;
+  position: relative;
+  min-height: 2.2em;
+  overflow: hidden;
+  text-align: center;
+  pointer-events: none;
+}
 
-    /* Glassy TEXT (not background). Use Times New Roman here */
-    .banner .text,
-    .time,
-    .vol label {
-    color: rgba(255,255,255,.92);      /* سفید کم‌رنگ */
-       text-shadow: 0 1px 2px rgba(0,0,0,.35);  /* کنتراست روی پس‌زمینه آبی */
-      font-family: 'Times New Roman', Times, serif;
-    }
-    .banner .text{
-      font-size: inherit;     /* same as Volume label size feel */
-      line-height: 1.2;
-      opacity: .85;
-      white-space: nowrap;
+.lyrics-line{
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity .35s ease, transform .35s ease, filter .35s ease;
+  white-space: normal; line-height: 1.25;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
+}
+
+/* ورود/خروج نرم */
+.lyrics-line.active{ opacity: 1; transform: translateY(0); }
+
+/* شیشه‌ای‌کردن متن (می‌تواند مشترک با بنر باشد) */
+.banner .text,
+.lyrics-line{
+  font-family: 'Times New Roman', Times, serif;
+  background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.1));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+  text-shadow:
+    0 1px 1px rgba(255,255,255,0.4),
+    0 2px 4px rgba(0,0,0,0.25);
+}
 
       /* Glassy text effect */
       background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.1));
@@ -571,6 +595,7 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 
 
 

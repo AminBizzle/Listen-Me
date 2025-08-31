@@ -520,7 +520,6 @@ function startLyricLoop(){
   lrcTimer = setInterval(() => {
     if (!lrcLines.length) return;
     const now = Math.max(0, audio.currentTime + LYRIC_OFFSET);
-    const now = Math.max(0, audio.currentTime + LYRIC_OFFSET);
 
 // اگر هنوز به زمان اولین خط نرسیده‌ایم، چیزی نمایش نده
 if (lrcLines.length && now < lrcLines[0].t) {
@@ -579,4 +578,5 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 

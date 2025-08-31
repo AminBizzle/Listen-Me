@@ -102,14 +102,13 @@
 
 .card.glow {
   box-shadow:
-    0 0 var(--glowSize) rgba(79,195,247, calc(var(--glowA) * 0.5)),
+    0 0 var(--glowSize) rgba(79,195,247, var(--glowA)),  /* هاله آبی */
     0 4px 20px rgba(0,0,0,0.4);
   background: linear-gradient(135deg,
               rgba(13, 75, 120, 0.65),
               rgba(79,195,247, 0.45));
   transition: box-shadow 0.08s linear, background 0.2s ease;
 }
-
 
     /* Hide native controls; custom UI */
     audio { width: 100%; display: none; }
@@ -456,7 +455,7 @@ function startGlowLoop(){
     const volScale = 0.6 + 0.4 * (+vol.value || 0);
     const pulse = Math.min(1, smooth * 1.8) * volScale;
 
-    const alpha = 0.25 + 0.55 * pulse;   // 0.25..0.80
+    const alpha = (0.25 + 0.55 * pulse) * 0.5;   // 0.25..0.80
     const size  = 12   + 16   * pulse;   // 12..28px
     card.style.setProperty('--glowA', alpha.toFixed(2));
     card.style.setProperty('--glowSize', `${Math.round(size)}px`);
@@ -581,6 +580,7 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 
 
 

@@ -246,7 +246,7 @@
 /* --- Lyrics container --- */
 .lyrics{
   width: var(--card-width);
-  margin: 2em auto 0;          /* ← دقیقاً ~دو خط فاصله زیر کارت */
+  margin: 1.2em auto 0;   /* قبلاً 2em بود؛ ~یک خط بالاتر رفت */
   position: relative;
   min-height: 2.2em;
   overflow: hidden;
@@ -520,6 +520,13 @@ function startLyricLoop(){
   lrcTimer = setInterval(() => {
     if (!lrcLines.length) return;
     const now = Math.max(0, audio.currentTime + LYRIC_OFFSET);
+    const now = Math.max(0, audio.currentTime + LYRIC_OFFSET);
+
+// اگر هنوز به زمان اولین خط نرسیده‌ایم، چیزی نمایش نده
+if (lrcLines.length && now < lrcLines[0].t) {
+  if (curIdx !== -1) { curIdx = -1; fadeOutAll(); }
+  return;
+}
 
     // یافتن ایندکس خط فعلی
     // (آخرین خطی که t <= now)
@@ -572,3 +579,4 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+

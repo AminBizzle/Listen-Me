@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
@@ -252,28 +251,23 @@
   overflow: hidden;
   text-align: center;
   pointer-events: none;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); 
 }
 
 .lyrics-line{
-  position:absolute; inset:0;
-  display:flex; align-items:center; justify-content:center;
-
-  /* فقط فید، بدون حرکت */
-  opacity:0;
-  visibility:hidden;          /* لایه‌ی خاموش واقعاً پنهان شود */
-  transition:opacity var(--fade) ease;  /* transform/filters حذف شود */
-  z-index:0;
-
-  white-space:normal;
-  line-height:1.25;
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transform: none;  /* قبلاً translateY(8px) بود → حذف حرکت */
+  transition: opacity 0.7s ease, filter 0.7s ease; /* transform را از ترنزیشن حذف کن */
+  white-space: normal; line-height: 1.25;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
+  will-change: opacity;
 }
 
-/* لایه‌ی روشن بالاتر و قابل‌دید */
+/* ورود نرم */
 .lyrics-line.active{
-  opacity:1;
-  visibility:visible;
-  z-index:1;
+  opacity: 1;
+  transform: none; /* یا می‌توانی کلاً این خط را حذف کنی */
 }
 
 /* استایل شیشه‌ای مطابق توضیح بالا */
@@ -285,6 +279,9 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-fill-color: transparent;
+  text-shadow:
+    0 1px 1px rgba(255,255,255,0.4),
+    0 2px 4px rgba(0,0,0,0.25);
 }
  </style>
 </head>
@@ -555,42 +552,18 @@ function stopLyricLoop(){
   if (lrcTimer) { clearInterval(lrcTimer); lrcTimer = null; }
 }
 
-const FADE_MS     = 700;  // با --fade هم‌راستا باشد
-const OVERLAP_OUT = 180;  // هم‌پوشانی کوتاه خروج لایه‌ی قبلی
-
+// کراس‌فید بین دو لایه
 function crossfadeTo(text){
   const showEl = useA ? lyrA : lyrB;
   const hideEl = useA ? lyrB : lyrA;
   useA = !useA;
 
-  // 1) آماده‌سازی لایه‌ی جدید در حالت خاموش
+  // آماده‌سازی لایه جدید
   showEl.textContent = text;
-  showEl.classList.remove('active');     // تضمین شروع از opacity:0
-  showEl.style.visibility = 'hidden';    // مانع فلیکر فریم اول
+  showEl.classList.add('active');
 
-  // 2) تضمین تریگر ترنزیشن با دو rAF
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      showEl.style.visibility = 'visible';   // قبل از فید-این ظاهر شود
-      showEl.classList.add('active');        // ← حالا فید-این نرم اجرا می‌شود
-    });
-  });
-
-  // 3) خاموش کردن لایه‌ی قبلی با کمی تأخیر (کراس‌فید واقعی)
-  setTimeout(() => {
-    hideEl.classList.remove('active');
-  }, OVERLAP_OUT);
-
-  // 4) پاکسازی: بعد از اتمام ترنزیشن اگر لایه active نبود، پنهانش کن
-  const tidy = (el) => {
-    const h = () => {
-      if (!el.classList.contains('active')) el.style.visibility = 'hidden';
-      el.removeEventListener('transitionend', h);
-    };
-    el.addEventListener('transitionend', h);
-  };
-  tidy(showEl);
-  tidy(hideEl);
+  // محو لایه قدیمی
+  hideEl.classList.remove('active');
 }
 
 // محوی کامل (برای پایان)
@@ -609,10 +582,3 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
-
-
-
-
-
-
-

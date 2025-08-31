@@ -127,15 +127,17 @@
       background: linear-gradient(135deg, var(--sky-dark), var(--sky-light));
       color: #fff; font-weight: 600;
     }
-    .btn:hover {
-  background: linear-gradient(135deg, #397EAC, #589BC7);
+    /* Hover فقط هاله‌ی آبی؛ پس‌زمینه دست‌نخورده می‌مونه */
+.btn:hover,
+.btn:focus-visible {
+  /* background را عمداً ست نمی‌کنیم تا همان مقدار .btn بماند */
   box-shadow:
-    0 0 10px rgba(57,126,172,0.6),   /* steel blue glow */
-    0 0 14px rgba(88,155,199,0.4),   /* light steel blue glow */
-    0 4px 12px rgba(0,0,0,0.35);     /* outer shadow for depth */
-  transition: all 0.25s ease;
+    0 0 10px rgba(57,126,172,0.55),  /* #397EAC steel blue */
+    0 0 16px rgba(88,155,199,0.45),  /* #589BC7 light steel blue */
+    0 4px 12px rgba(0,0,0,0.35);     /* سایهٔ عمق */
+  transition: box-shadow .25s ease;
+  outline: none;
 }
-
     /* Base range (WebKit/Chromium + generic) */
 .range{
   -webkit-appearance: none; appearance: none;
@@ -581,6 +583,7 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 
 
 

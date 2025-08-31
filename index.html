@@ -255,20 +255,24 @@
 }
 
 .lyrics-line{
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0;
-  transform: none;  /* قبلاً translateY(8px) بود → حذف حرکت */
-  transition: opacity 0.7s ease, filter 0.7s ease; /* transform را از ترنزیشن حذف کن */
-  white-space: normal; line-height: 1.25;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
-  will-change: opacity;
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+
+  /* فقط فید، بدون حرکت */
+  opacity:0;
+  visibility:hidden;          /* لایه‌ی خاموش واقعاً پنهان شود */
+  transition:opacity var(--fade) ease;  /* transform/filters حذف شود */
+  z-index:0;
+
+  white-space:normal;
+  line-height:1.25;
 }
 
-/* ورود نرم */
+/* لایه‌ی روشن بالاتر و قابل‌دید */
 .lyrics-line.active{
-  opacity: 1;
-  transform: none; /* یا می‌توانی کلاً این خط را حذف کنی */
+  opacity:1;
+  visibility:visible;
+  z-index:1;
 }
 
 /* استایل شیشه‌ای مطابق توضیح بالا */
@@ -553,18 +557,42 @@ function stopLyricLoop(){
   if (lrcTimer) { clearInterval(lrcTimer); lrcTimer = null; }
 }
 
-// کراس‌فید بین دو لایه
+const FADE_MS     = 700;  // با --fade هم‌راستا باشد
+const OVERLAP_OUT = 180;  // هم‌پوشانی کوتاه خروج لایه‌ی قبلی
+
 function crossfadeTo(text){
   const showEl = useA ? lyrA : lyrB;
   const hideEl = useA ? lyrB : lyrA;
   useA = !useA;
 
-  // آماده‌سازی لایه جدید
+  // 1) آماده‌سازی لایه‌ی جدید در حالت خاموش
   showEl.textContent = text;
-  showEl.classList.add('active');
+  showEl.classList.remove('active');     // تضمین شروع از opacity:0
+  showEl.style.visibility = 'hidden';    // مانع فلیکر فریم اول
 
-  // محو لایه قدیمی
-  hideEl.classList.remove('active');
+  // 2) تضمین تریگر ترنزیشن با دو rAF
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      showEl.style.visibility = 'visible';   // قبل از فید-این ظاهر شود
+      showEl.classList.add('active');        // ← حالا فید-این نرم اجرا می‌شود
+    });
+  });
+
+  // 3) خاموش کردن لایه‌ی قبلی با کمی تأخیر (کراس‌فید واقعی)
+  setTimeout(() => {
+    hideEl.classList.remove('active');
+  }, OVERLAP_OUT);
+
+  // 4) پاکسازی: بعد از اتمام ترنزیشن اگر لایه active نبود، پنهانش کن
+  const tidy = (el) => {
+    const h = () => {
+      if (!el.classList.contains('active')) el.style.visibility = 'hidden';
+      el.removeEventListener('transitionend', h);
+    };
+    el.addEventListener('transitionend', h);
+  };
+  tidy(showEl);
+  tidy(hideEl);
 }
 
 // محوی کامل (برای پایان)
@@ -583,6 +611,7 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 
 
 

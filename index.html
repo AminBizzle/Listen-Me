@@ -554,7 +554,7 @@ if (next && now > next.t - 0.12) {
     if (curIdx === lrcLines.length - 1 && now > lrcLines[curIdx].t + 6){
       fadeOutAll();
     }
-  }, 150);
+  }, 100);
 }
 function stopLyricLoop(){
   if (lrcTimer) { clearInterval(lrcTimer); lrcTimer = null; }
@@ -590,6 +590,7 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 
 
 

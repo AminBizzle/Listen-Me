@@ -91,6 +91,7 @@
       padding: 16px;
       border-radius: 16px;
 
+      /* افکت شیشه‌ای با رنگ‌های برند آبی */
       background: linear-gradient(135deg,
               rgba(13, 75, 120, 0.25),   /* sky-dark نیمه‌شفاف */
               rgba(79, 195, 247, 0.12)   /* sky-light نیمه‌شفاف */
@@ -243,13 +244,18 @@
   }
 }
 
+@media (max-width: 480px){
+  .lyrics-line{
+    font-size: 0.9em;   /* فقط یک درجه کوچکتر */
+  }
+}
+
 /* --- Lyrics container --- */
 .lyrics{
   width: var(--card-width);
   margin: 1.2em auto 0;   /* قبلاً 2em بود؛ ~یک خط بالاتر رفت */
   position: relative;
-  min-height: 2.6em;
-  padding-bottom: .2em;
+  min-height: 2.2em;
   overflow: hidden;
   text-align: center;
   pointer-events: none;
@@ -259,10 +265,9 @@
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
   opacity: 0;
-  font-size: 0.92em;
   transform: none;  /* قبلاً translateY(8px) بود → حذف حرکت */
   transition: opacity 0.7s ease, filter 0.7s ease; /* transform را از ترنزیشن حذف کن */
-  white-space: normal; line-height: 1.3;
+  white-space: normal; line-height: 1.25;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
   will-change: opacity;
 }
@@ -591,18 +596,3 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

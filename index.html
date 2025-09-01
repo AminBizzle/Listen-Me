@@ -540,9 +540,15 @@ if (lrcLines.length && now < lrcLines[0].t) {
     while (i + 1 < lrcLines.length && lrcLines[i+1].t <= now) i++;
 
     if (i !== curIdx){
-      curIdx = i;
-      crossfadeTo(lrcLines[i].text);
-    }
+  curIdx = i;
+  crossfadeTo(lrcLines[i].text);
+}
+
+// جلوگیری از دُم تصویری (پیش از ظاهر شدن خط بعدی، قبلی رو خاموش کن)
+const next = lrcLines[curIdx + 1];
+if (next && now > next.t - 0.12) {
+  (useA ? lyrB : lyrA).classList.remove('active');
+}
 
     // اگر بعد از آخرین تایم هستیم و آهنگ نزدیک پایان است، محو کن
     if (curIdx === lrcLines.length - 1 && now > lrcLines[curIdx].t + 6){
@@ -584,6 +590,7 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 
 
 

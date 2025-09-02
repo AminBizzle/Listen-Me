@@ -152,9 +152,9 @@
 .btn::before{
   content: "";
   display: block;
-  width: 18px; height: 18px;
-  background: linear-gradient(135deg, #397EAC, #589BC7);  /* steel blue → light steel blue */
-  /* ماسک مثلث (Play) */
+  width: 22px;   /* قبلی 18px بود → بزرگ‌ترش کن */
+  height: 22px;  /* قبلی 18px بود */
+  background: linear-gradient(135deg, #397EAC, #589BC7);
   -webkit-mask: url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>\
   <polygon points='22,16 22,48 46,32'/>\
@@ -650,4 +650,5 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 

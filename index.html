@@ -140,20 +140,22 @@
   outline: none;
 }
 
-/* اندازه و فضای آیکن */
+/* دکمه و آیکن — نسخه‌ی نهایی با اولویت بالا */
 .btn{
   position: relative;
-  width: 46px; height: 42px;       /* سایز دکمه شما؛ در صورت نیاز تنظیم کن */
-  display: inline-flex; align-items: center; justify-content: center;
-  transition: box-shadow .25s ease; /* قبلاً هم توصیه شده بود */
+  display: grid;
+  place-items: center;
+  width: 64px;      /* اگر کوچک/بزرگ بود این را هم تغییر بده */
+  height: 44px;
+  transition: box-shadow .25s ease;
 }
 
-/* آیکن داخل دکمه – پیشفرض: Play */
+/* آیکن Play (سه‌گوش) */
 .btn::before{
   content: "";
   display: block;
-  width: 26px;   /* قبلی 18px بود → بزرگ‌ترش کن */
-  height: 26px;  /* قبلی 18px بود */
+  width: 26px !important;   /* ← این دوتا را تغییر بده تا بزرگ/کوچک شود */
+  height: 26px !important;
   background: linear-gradient(135deg, #397EAC, #589BC7);
   -webkit-mask: url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>\
@@ -165,20 +167,17 @@
 </svg>") center / contain no-repeat;
 }
 
-/* وقتی در حالت Pause هستیم: دو میله (||) */
+/* آیکن Pause (دو مستطیل) وقتی state=pause است */
 .btn[data-state="pause"]::before{
-  /* همان گرادیان رنگ */
-  background: linear-gradient(135deg, #397EAC, #589BC7);
-  /* ماسک Pause */
   -webkit-mask: url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>\
-  <rect x='20' y='16' width='8' height='32' rx='2'/>\
-  <rect x='36' y='16' width='8' height='32' rx='2'/>\
+  <rect x='18' y='16' width='10' height='32' rx='2'/>\
+  <rect x='36' y='16' width='10' height='32' rx='2'/>\
 </svg>") center / contain no-repeat;
           mask: url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>\
-  <rect x='20' y='16' width='8' height='32' rx='2'/>\
-  <rect x='36' y='16' width='8' height='32' rx='2'/>\
+  <rect x='18' y='16' width='10' height='32' rx='2'/>\
+  <rect x='36' y='16' width='10' height='32' rx='2'/>\
 </svg>") center / contain no-repeat;
 }
 
@@ -650,6 +649,7 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 
 
 

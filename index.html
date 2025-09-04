@@ -310,6 +310,15 @@
   }
 }
 
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 430px){
+    .banner .text{
+      font-size: calc(1em + 2px); /* یک درجه بزرگ‌تر فقط روی iPhone های رایج */
+    }
+  }
+}
+
+
 /* --- Lyrics container --- */
 .lyrics{
   width: var(--card-width);
@@ -351,6 +360,8 @@
     0 1px 1px rgba(255,255,255,0.4),
     0 2px 4px rgba(0,0,0,0.25);
 }
+
+let ac, analyser, mediaSrc, gainNode, fftBuf, rafId, glowOn = false, smooth = 0;
  </style>
 </head>
 <body>
@@ -457,7 +468,11 @@ audio.addEventListener('ended', () => { playBtn.setAttribute('data-state','play'
     });
 
     // Volume
-    vol.addEventListener('input', () => { audio.volume = +vol.value; });
+    vol.addEventListener('input', () => {
+  const v = +vol.value;
+  if (gainNode) gainNode.gain.value = v;  // iOS/همه
+  else audio.volume = v;                  // fallback دسکتاپ
+});
 
 // گرفتن کارت
 const card = document.querySelector('.card');
@@ -496,14 +511,22 @@ audio.addEventListener('error', () => {
 let ac, analyser, mediaSrc, fftBuf, rafId, glowOn = false, smooth = 0;
 
 function initAnalyser(){
-  if (ac) return; // فقط یک بار
+  if (ac) return;
   ac = new (window.AudioContext || window.webkitAudioContext)();
   mediaSrc = ac.createMediaElementSource(audio);
+
+  gainNode = ac.createGain();
+  gainNode.gain.value = +vol.value || 1;     // ← ولوم اولیه
+
   analyser = ac.createAnalyser();
   analyser.fftSize = 2048;
   analyser.smoothingTimeConstant = 0.85;
-  mediaSrc.connect(analyser);
+
+  // media → gain → analyser → speakers
+  mediaSrc.connect(gainNode);
+  gainNode.connect(analyser);
   analyser.connect(ac.destination);
+
   fftBuf = new Uint8Array(analyser.frequencyBinCount);
 }
 
@@ -654,6 +677,7 @@ audio.addEventListener('ended', () => {
   stopLyricLoop();
   fadeOutAll();
 });
+
   </script>
 </body>
 </html>

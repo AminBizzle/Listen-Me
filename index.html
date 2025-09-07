@@ -318,6 +318,14 @@
   }
 }
 
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 430px){
+    .lyrics-line {
+      font-size: calc(1em + 2px); /* یک درجه بزرگ‌تر فقط روی آیفون */
+    }
+  }
+}
+
 
 /* --- Lyrics container --- */
 .lyrics{
@@ -681,6 +689,7 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 
 
 

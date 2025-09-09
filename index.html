@@ -121,44 +121,37 @@
       align-items: center;
     }
 
-    .btn{
-      appearance: none; border: 0; cursor: pointer;
-      padding: 10px 14px; border-radius: 12px;
-      background: linear-gradient(135deg, var(--sky-dark), var(--sky-light));
-      color: #fff; font-weight: 600;
-      .btn { transition: box-shadow .25s ease; }
-    }
-    /* Hover فقط هاله‌ی آبی؛ پس‌زمینه دست‌نخورده می‌مونه */
+    /* دکمه پایه */
+.btn{
+  appearance:none; border:0; cursor:pointer;
+  display:grid; place-items:center;
+  width:64px;           /* اگر کوچک/بزرگ بود این را تغییر بده */
+  height:44px;
+  border-radius:12px;
+  background: linear-gradient(135deg, var(--sky-dark), var(--sky-light));
+  color:#fff; font-weight:600;
+  transition: box-shadow .25s ease;   /* ← قبلاً اشتباهی تودرتو بود */
+}
+
+/* Hover فقط هاله‌ی آبی؛ پس‌زمینه دست‌نخورده می‌مونه */
 .btn:hover,
-.btn:focus-visible {
-  /* background را عمداً ست نمی‌کنیم تا همان مقدار .btn بماند */
+.btn:focus-visible{
   box-shadow:
     0 0 10px rgba(57,126,172,0.55),  /* #397EAC steel blue */
     0 0 16px rgba(88,155,199,0.45),  /* #589BC7 light steel blue */
-    0 4px 12px rgba(0,0,0,0.35);     /* سایهٔ عمق */
-  transition: box-shadow .25s ease;
-  outline: none;
+    0 4px 12px rgba(0,0,0,0.35);
+  outline:none;
 }
 
-/* دکمه و آیکن — نسخه‌ی نهایی با اولویت بالا */
-.btn{
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 64px;      /* اگر کوچک/بزرگ بود این را هم تغییر بده */
-  height: 44px;
-  transition: box-shadow .25s ease;
-}
-
-/* آیکن Play (سه‌گوش) */
+/* آیکن Play/Pause با ماسک SVG و درخش ملایم */
 .btn::before{
-  content: "";
-  display: block;
-  width: 28px;   /* ← سایز آیکون */
-  height: 28px;
-  background: linear-gradient(135deg, #ffffff, #dbeafe); /* سفید → آبی خیلی روشن */
+  content:"";
+  display:block;
+  width:28px;          /* سایز آیکون */
+  height:28px;
+  background: linear-gradient(135deg, #ffffff, #dbeafe);
 
-  /* آیکون ماسک */
+  /* آیکن Play به‌صورت پیش‌فرض */
   -webkit-mask: url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>\
   <polygon points='22,16 22,48 46,32'/>\
@@ -168,24 +161,23 @@
   <polygon points='22,16 22,48 46,32'/>\
 </svg>") center / contain no-repeat;
 
-  /* افکت درخشنده و بوردر */
+  /* درخش ملایم */
   filter:
-    drop-shadow(0 0 3px rgba(255,255,255,0.9))  /* درخشش سفید نزدیک */
-    drop-shadow(0 0 6px rgba(56, 160, 237, 0.8)) /* درخشش آبی نئون */
-    drop-shadow(0 0 12px rgba(56, 160, 237, 0.6)); /* هاله دورتر */
-
+    drop-shadow(0 0 3px rgba(255,255,255,0.9))
+    drop-shadow(0 0 6px rgba(56,160,237,0.8))
+    drop-shadow(0 0 12px rgba(56,160,237,0.6));
   transition: filter .25s ease;
 }
 
-/* افکت Hover برای یوزر: نور بیشتر */
+/* تقویت درخش هنگام Hover */
 .btn:hover::before{
   filter:
     drop-shadow(0 0 4px rgba(255,255,255,1))
-    drop-shadow(0 0 8px rgba(56, 160, 237, 0.9))
-    drop-shadow(0 0 16px rgba(56, 160, 237, 0.7));
+    drop-shadow(0 0 8px rgba(56,160,237,0.9))
+    drop-shadow(0 0 16px rgba(56,160,237,0.7));
 }
 
-/* آیکن Pause (دو مستطیل) وقتی state=pause است */
+/* وقتی پخش شده (Pause state) → ماسک آیکن مکث */
 .btn[data-state="pause"]::before{
   -webkit-mask: url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>\
@@ -369,7 +361,6 @@
     0 2px 4px rgba(0,0,0,0.25);
 }
 
-let ac, analyser, mediaSrc, gainNode, fftBuf, rafId, glowOn = false, smooth = 0;
  </style>
 </head>
 <body>
@@ -415,6 +406,7 @@ let ac, analyser, mediaSrc, gainNode, fftBuf, rafId, glowOn = false, smooth = 0;
     const cur = document.getElementById('cur');
     const dur = document.getElementById('dur');
     const vol = document.getElementById('vol');
+let ac, analyser, mediaSrc, gainNode, fftBuf, rafId, glowOn = false, smooth = 0;
 
     // Time formatter mm:ss
     const fmt = s => {
@@ -689,6 +681,7 @@ audio.addEventListener('ended', () => {
   </script>
 </body>
 </html>
+
 
 
 

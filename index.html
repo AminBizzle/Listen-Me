@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
@@ -83,6 +82,16 @@
         0 1px 1px rgba(255,255,255,0.4),
         0 2px 4px rgba(0,0,0,0.25);
     }
+
+.bg-video {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;   /* تمام صفحه را پر می‌کند */
+  z-index: -1;         /* زیر همه لایه‌ها */
+  filter: brightness(.9) saturate(1.05); /* کمی هماهنگ با تم */
+}
 
     .card {
   --glowA: 0;
@@ -365,17 +374,22 @@
  </style>
 </head>
 <body>
+  <!-- ویدئو بک‌گراند -->
+  <video class="bg-video" autoplay muted loop playsinline>
+    <source src="video.mp4" type="video/mp4">
+  </video>
+
   <div class="wrap">
     <div class="stack" dir="ltr">
-      <!-- Top banner -->
+      <!-- بنر -->
       <div class="banner">
         <span class="text">Use your headphones for a better experience.</span>
       </div>
 
-      <!-- Player card -->
+      <!-- کارت پلیر (همان فعلی) -->
       <div class="card">
         <audio id="audio" preload="metadata">
-          <source src="its never gonna be okay.mp3" type="audio/mpeg" />
+          <source src="Kiasmos - Swept.mp3" type="audio/mpeg" />
         </audio>
 
         <div class="player">
@@ -389,12 +403,6 @@
           <label for="vol">Volume</label>
           <input type="range" id="vol" class="range" min="0" max="1" step="0.01" value="1" aria-label="Volume">
         </div>
-
-<!-- Lyrics (exactly two lines below the card) -->
-<div class="lyrics" id="lyrics">
-  <div class="lyrics-line" id="lyrA">‎</div>
-  <div class="lyrics-line" id="lyrB">‎</div>
-</div>
       </div>
     </div>
   </div>
@@ -566,118 +574,20 @@ function stopGlowLoop(){
   card.style.setProperty('--glowSize', '20px');
 }
 
-// ====== LRC Sync (line-by-line with soft fade) ======
-
-const LRC_URL = 'lyrics.lrc';   // اگر مسیر دیگری گذاشتی این را اصلاح کن
-const LYRIC_OFFSET = 0.00;      // در صورت نیاز افست میلی‌ثانیه‌ای (+/-)
-
-const lyrA = document.getElementById('lyrA');
-const lyrB = document.getElementById('lyrB');
-let useA = true;                // برای سوییچ بین لایه‌ها
-let lrcLines = [];              // [{t:seconds, text:string}, ...]
-let curIdx = -1;
-
-// لود و پارس
-fetch(LRC_URL)
-  .then(r => {
-    if (!r.ok) throw new Error('LRC not found');
-    return r.text();
-  })
-  .then(txt => {
-    lrcLines = parseLRC(txt);
-    // اختیاری: اولین خط را خالی نگه دار تا قبل پخش چیزی نباشد
-  })
-  .catch(err => {
-    console.warn('[LRC]', err);
-  });
-
-// پارسر ساده LRC: [mm:ss.xx] Line...
-function parseLRC(text){
-  const lines = [];
-  const re = /\[(\d+):(\d+(?:\.\d+)?)\]\s*(.*)/; // [m:ss.xx] text
-  text.split(/\r?\n/).forEach(raw => {
-    const m = raw.match(re);
-    if (!m) return;
-    const mmin = parseInt(m[1], 10);
-    const sec  = parseFloat(m[2]);
-    const t = mmin * 60 + sec;
-    const txt = m[3].trim();
-    if (txt) lines.push({ t, text: txt });
-  });
-  // مرتب‌سازی و حذف خطوط خیلی نزدیک
-  lines.sort((a,b)=>a.t-b.t);
-  return lines;
-}
-
-// آپدیت اکتیو لاین (هر 150ms)
-let lrcTimer = null;
-function startLyricLoop(){
-  stopLyricLoop();
-  lrcTimer = setInterval(() => {
-    if (!lrcLines.length) return;
-    const now = Math.max(0, audio.currentTime + LYRIC_OFFSET);
-
-// اگر هنوز به زمان اولین خط نرسیده‌ایم، چیزی نمایش نده
-if (lrcLines.length && now < lrcLines[0].t) {
-  if (curIdx !== -1) { curIdx = -1; fadeOutAll(); }
-  return;
-}
-
-    // یافتن ایندکس خط فعلی
-    // (آخرین خطی که t <= now)
-    let i = curIdx;
-    if (i < 0 || i >= lrcLines.length || lrcLines[i].t > now) i = 0;
-    while (i + 1 < lrcLines.length && lrcLines[i+1].t <= now) i++;
-
-    if (i !== curIdx){
-  curIdx = i;
-  crossfadeTo(lrcLines[i].text);
-}
-
-// جلوگیری از دُم تصویری (پیش از ظاهر شدن خط بعدی، قبلی رو خاموش کن)
-const next = lrcLines[curIdx + 1];
-if (next && now > next.t - 0.12) {
-  (useA ? lyrB : lyrA).classList.remove('active');
-}
-
-    // اگر بعد از آخرین تایم هستیم و آهنگ نزدیک پایان است، محو کن
-    if (curIdx === lrcLines.length - 1 && now > lrcLines[curIdx].t + 6){
-      fadeOutAll();
-    }
-  }, 100);
-}
-function stopLyricLoop(){
-  if (lrcTimer) { clearInterval(lrcTimer); lrcTimer = null; }
-}
-
-// کراس‌فید بین دو لایه
-function crossfadeTo(text){
-  const showEl = useA ? lyrA : lyrB;
-  const hideEl = useA ? lyrB : lyrA;
-  useA = !useA;
-
-  // آماده‌سازی لایه جدید
-  showEl.textContent = text;
-  showEl.classList.add('active');
-
-  // محو لایه قدیمی
-  hideEl.classList.remove('active');
-}
-
-// محوی کامل (برای پایان)
-function fadeOutAll(){
-  lyrA.classList.remove('active');
-  lyrB.classList.remove('active');
-}
-
-// همگام با پخش/توقف
-audio.addEventListener('play',  startLyricLoop);
-audio.addEventListener('pause', stopLyricLoop);
-audio.addEventListener('ended', () => {
-  stopLyricLoop();
-  fadeOutAll();
-});
-
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
